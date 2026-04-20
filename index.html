@@ -43,9 +43,19 @@
         }
 
         /* 按钮网格 */
-        .grid {
+		.grid1 {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 16px;
+        }
+        .grid2 {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+		.grid3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
         }
 
@@ -74,9 +84,9 @@
         }
 
         /* 不同户型颜色区分 */
-        .btn-94 { background: #48bb78; }
-        .btn-104 { background: #ed8936; }
-        .btn-128 { background: #9f7aea; }
+        .btn-94 { background: #6950a1; }
+        .btn-104 { background: #fcaf17; }
+        .btn-128 { background: #f15b6c; }
 		.btn-other { background: #00a6ac; }
     </style>
 </head>
@@ -85,10 +95,10 @@
     <div class="container">
         <div class="title">
             <h1>虹桥和著一期</h1>
-            <p>毛坯结构VR全景&照片存档</p>
+            <p>==========毛坯结构VR全景&照片存档==========</p>
         </div>
 
-        <div class="grid">
+        <div class="grid2">
             <a href="#" class="btn btn-94">94边套 户型照片(收集中)</a>
             <a href="#" class="btn btn-94">94中间套 户型照片(收集中)</a>
             <a href="104a.html" class="btn btn-104">104边套 户型VR</a>
@@ -98,6 +108,28 @@
             <a href="128a.html" class="btn btn-128">128边套 户型VR</a>
             <a href="128b.html" class="btn btn-128">128中间套 户型照片</a>
 			<a href="other.html" class="btn btn-other">其他</a>
+        </div>
+		
+        <div class="title">
+            <p>==========楼栋进度更新==========</p>
+        </div>
+		
+		<div class="grid1">
+            <a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=BB08J2" class="btn btn-other">楼栋进度汇总</a>
+        </div>
+		        <div class="title">
+            <p>==========楼栋家书存档==========</p>
+        </div>
+		<div class="grid3">
+            <a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=ae8pj7" class="btn btn-128">12栋</a>
+			<a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=mz4xva" class="btn btn-128">11栋</a>
+			<a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=0h3dap" class="btn btn-104">10栋</a>
+			<a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=zerib2" class="btn btn-104">8栋</a>
+			<a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=akuyxs" class="btn btn-128">7栋</a>
+			<a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=gif9zw" class="btn btn-104">6栋</a>
+			<a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=o246oo" class="btn btn-94">3栋</a>
+			<a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=ibz9d4" class="btn btn-104">2栋</a>
+			<a href="https://docs.qq.com/sheet/DTU9FT25kUHJvaHZu?tab=o8ydci" class="btn btn-other">样板间</a>
         </div>
     </div>
 </body>
