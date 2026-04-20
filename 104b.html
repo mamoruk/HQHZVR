@@ -33,11 +33,11 @@
 <body>
 <div class="control">
     <select id="panoSelect">
-    <option value="104b-1.jpg">厨房&玄关</option>
-    <option value="104b-2.jpg">阳台</option>
-    <option value="104b-3.jpg">南次卧</option>
-    <option value="104b-4.jpg">北次卧</option>
-    <option value="104b-5.jpg">主卧</option>
+    <option value="104b/104b-1.jpg">厨房&玄关</option>
+    <option value="104b/104b-2.jpg">阳台</option>
+    <option value="104b/104b-3.jpg">南次卧</option>
+    <option value="104b/104b-4.jpg">北次卧</option>
+    <option value="104b/104b-5.jpg">主卧</option>
     </select>
 </div>
 <div id="panorama"></div>
@@ -84,7 +84,7 @@ document.getElementById('panoSelect').addEventListener('change', function () {
 // 启动
 window.onload = () => {
   preload();        // 预加载所有图片
-  loadPanorama("104b-1.jpg");
+  loadPanorama("104b/104b-1.jpg");
 };
 </script>
 </body>
