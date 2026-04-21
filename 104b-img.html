@@ -83,6 +83,7 @@
             }
         }
 
+        /* 看图弹窗 */
         .viewer {
             position: fixed;
             top: 0;
@@ -105,7 +106,15 @@
             height: auto;
             object-fit: contain;
             transform-origin: center center;
+            transition: transform 0.2s ease-out;
             touch-action: none;
+        }
+
+        /* 移动端隐藏按钮 */
+        @media (max-width: 768px) {
+            .close, .prev, .next {
+                display: none !important;
+            }
         }
 
         .close {
@@ -139,7 +148,6 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            user-select: none;
             z-index: 10;
         }
 
@@ -205,6 +213,7 @@
             listEl.appendChild(div);
         });
 
+        // 打开看图
         function openImg(idx) {
             currentIndex = idx;
             scale = 1;
@@ -215,24 +224,34 @@
             document.body.style.overflow = "hidden";
         }
 
+        // 关闭看图
         function closeViewer() {
             viewer.style.display = "none";
             document.body.style.overflow = "auto";
         }
 
+        // 上一张
         function prev() {
             currentIndex = (currentIndex - 1 + images.length) % images.length;
-            scale = 1; lastScale = 1;
+            scale = 1;
+            lastScale = 1;
             viewImg.style.transform = `scale(${scale})`;
             viewImg.src = folder + images[currentIndex];
         }
 
+        // 下一张
         function next() {
             currentIndex = (currentIndex + 1) % images.length;
-            scale = 1; lastScale = 1;
+            scale = 1;
+            lastScale = 1;
             viewImg.style.transform = `scale(${scale})`;
             viewImg.src = folder + images[currentIndex];
         }
+
+        // 点击背景关闭
+        viewer.onclick = (e) => {
+            if (e.target === viewer) closeViewer();
+        };
 
         // 滚轮缩放
         viewer.addEventListener("wheel", e => {
@@ -242,18 +261,14 @@
             viewImg.style.transform = `scale(${scale})`;
         });
 
-        // 双击重置/放大
+        // 双击放大/复原
         viewImg.addEventListener("dblclick", e => {
             e.preventDefault();
-            if (scale > 1) {
-                scale = 1;
-            } else {
-                scale = 2;
-            }
+            scale = scale > 1 ? 1 : 2;
             viewImg.style.transform = `scale(${scale})`;
         });
 
-        // 移动端双指缩放
+        // 双指缩放
         let touchStartDist = 0;
         viewer.addEventListener("touchstart", e => {
             if (e.touches.length === 2) {
@@ -279,7 +294,7 @@
             }
         });
 
-        // 左右滑动切换图片
+        // 左右滑动切换（任何缩放状态都可用）
         let touchStartX = 0;
         viewer.addEventListener("touchstart", e => {
             if (e.touches.length === 1) {
@@ -288,16 +303,14 @@
         });
 
         viewer.addEventListener("touchend", e => {
-            if (scale !== 1) return; // 放大时不切换
-            if (e.changedTouches.length === 1) {
-                const dx = e.changedTouches[0].clientX - touchStartX;
-                if (Math.abs(dx) > 50) {
-                    dx > 0 ? prev() : next();
-                }
+            if (e.changedTouches.length !== 1) return;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(dx) > 60) {
+                dx > 0 ? prev() : next();
             }
         });
 
-        // 键盘
+        // 键盘控制
         document.addEventListener("keydown", e => {
             if (viewer.style.display !== "flex") return;
             if (e.key === "Escape") closeViewer();
@@ -305,10 +318,10 @@
             if (e.key === "ArrowRight") next();
         });
 
+        // PC端按钮
         document.querySelector(".close").onclick = closeViewer;
         document.querySelector(".prev").onclick = prev;
         document.querySelector(".next").onclick = next;
-        viewer.onclick = e => e.target === viewer && closeViewer();
     </script>
 </body>
 </html>
