@@ -83,7 +83,6 @@
             }
         }
 
-        /* 🔥 大图查看器 - 完美自适应 */
         .viewer {
             position: fixed;
             top: 0;
@@ -96,6 +95,7 @@
             align-items: center;
             z-index: 9999;
             padding: 10px;
+            user-select: none;
         }
 
         .view-img {
@@ -104,8 +104,8 @@
             width: auto;
             height: auto;
             object-fit: contain;
-            user-select: none;
             transform-origin: center center;
+            touch-action: none;
         }
 
         .close {
@@ -176,7 +176,7 @@
 
         function genList() {
             let list = [...manualImages];
-            if (list.length === 0) return [];
+            if (!list.length) return [];
             const lastNum = parseInt(list.at(-1));
             for (let i = lastNum + 1; i <= maxImages; i++) {
                 list.push(i + "." + ext);
@@ -187,10 +187,11 @@
         const images = genList();
         let currentIndex = 0;
         let scale = 1;
+        let lastScale = 1;
 
-        const listEl = document.getElementById("list");
         const viewer = document.getElementById("viewer");
         const viewImg = document.getElementById("viewImg");
+        const listEl = document.getElementById("list");
 
         // 渲染瀑布流
         images.forEach((src, idx) => {
@@ -204,36 +205,33 @@
             listEl.appendChild(div);
         });
 
-        // 打开大图（自动重置自适应）
         function openImg(idx) {
             currentIndex = idx;
             scale = 1;
+            lastScale = 1;
             viewImg.style.transform = `scale(${scale})`;
             viewImg.src = folder + images[currentIndex];
             viewer.style.display = "flex";
             document.body.style.overflow = "hidden";
         }
 
-        // 关闭
         function closeViewer() {
             viewer.style.display = "none";
             document.body.style.overflow = "auto";
         }
 
-        // 上一张
         function prev() {
             currentIndex = (currentIndex - 1 + images.length) % images.length;
-            viewImg.src = folder + images[currentIndex];
-            scale = 1;
+            scale = 1; lastScale = 1;
             viewImg.style.transform = `scale(${scale})`;
+            viewImg.src = folder + images[currentIndex];
         }
 
-        // 下一张
         function next() {
             currentIndex = (currentIndex + 1) % images.length;
-            viewImg.src = folder + images[currentIndex];
-            scale = 1;
+            scale = 1; lastScale = 1;
             viewImg.style.transform = `scale(${scale})`;
+            viewImg.src = folder + images[currentIndex];
         }
 
         // 滚轮缩放
@@ -244,7 +242,62 @@
             viewImg.style.transform = `scale(${scale})`;
         });
 
-        // 键盘控制
+        // 双击重置/放大
+        viewImg.addEventListener("dblclick", e => {
+            e.preventDefault();
+            if (scale > 1) {
+                scale = 1;
+            } else {
+                scale = 2;
+            }
+            viewImg.style.transform = `scale(${scale})`;
+        });
+
+        // 移动端双指缩放
+        let touchStartDist = 0;
+        viewer.addEventListener("touchstart", e => {
+            if (e.touches.length === 2) {
+                const d = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                touchStartDist = d;
+                lastScale = scale;
+            }
+        });
+
+        viewer.addEventListener("touchmove", e => {
+            e.preventDefault();
+            if (e.touches.length === 2) {
+                const d = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                scale = lastScale * (d / touchStartDist);
+                scale = Math.max(0.5, Math.min(scale, 3));
+                viewImg.style.transform = `scale(${scale})`;
+            }
+        });
+
+        // 左右滑动切换图片
+        let touchStartX = 0;
+        viewer.addEventListener("touchstart", e => {
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+            }
+        });
+
+        viewer.addEventListener("touchend", e => {
+            if (scale !== 1) return; // 放大时不切换
+            if (e.changedTouches.length === 1) {
+                const dx = e.changedTouches[0].clientX - touchStartX;
+                if (Math.abs(dx) > 50) {
+                    dx > 0 ? prev() : next();
+                }
+            }
+        });
+
+        // 键盘
         document.addEventListener("keydown", e => {
             if (viewer.style.display !== "flex") return;
             if (e.key === "Escape") closeViewer();
@@ -252,7 +305,6 @@
             if (e.key === "ArrowRight") next();
         });
 
-        // 点击事件
         document.querySelector(".close").onclick = closeViewer;
         document.querySelector(".prev").onclick = prev;
         document.querySelector(".next").onclick = next;
