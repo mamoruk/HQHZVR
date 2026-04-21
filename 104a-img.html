@@ -83,7 +83,7 @@
             }
         }
 
-        /* 🔥 大图查看器 - 完美自适应 */
+        /* 看图弹窗 */
         .viewer {
             position: fixed;
             top: 0;
@@ -96,6 +96,7 @@
             align-items: center;
             z-index: 9999;
             padding: 10px;
+            user-select: none;
         }
 
         .view-img {
@@ -104,8 +105,16 @@
             width: auto;
             height: auto;
             object-fit: contain;
-            user-select: none;
             transform-origin: center center;
+            transition: transform 0.2s ease-out;
+            touch-action: none;
+        }
+
+        /* 移动端隐藏按钮 */
+        @media (max-width: 768px) {
+            .close, .prev, .next {
+                display: none !important;
+            }
         }
 
         .close {
@@ -139,7 +148,6 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            user-select: none;
             z-index: 10;
         }
 
@@ -155,7 +163,7 @@
             <p>毛坯现场照片存档</p>
         </div>
 
-        <a href="index.html" class="back">← 返回VR全景</a>
+        <a href="index.html" class="back">← 返回</a>
         <div class="waterfall" id="list"></div>
     </div>
 
@@ -176,7 +184,7 @@
 
         function genList() {
             let list = [...manualImages];
-            if (list.length === 0) return [];
+            if (!list.length) return [];
             const lastNum = parseInt(list.at(-1));
             for (let i = lastNum + 1; i <= maxImages; i++) {
                 list.push(i + "." + ext);
@@ -187,10 +195,11 @@
         const images = genList();
         let currentIndex = 0;
         let scale = 1;
+        let lastScale = 1;
 
-        const listEl = document.getElementById("list");
         const viewer = document.getElementById("viewer");
         const viewImg = document.getElementById("viewImg");
+        const listEl = document.getElementById("list");
 
         // 渲染瀑布流
         images.forEach((src, idx) => {
@@ -204,17 +213,18 @@
             listEl.appendChild(div);
         });
 
-        // 打开大图（自动重置自适应）
+        // 打开看图
         function openImg(idx) {
             currentIndex = idx;
             scale = 1;
+            lastScale = 1;
             viewImg.style.transform = `scale(${scale})`;
             viewImg.src = folder + images[currentIndex];
             viewer.style.display = "flex";
             document.body.style.overflow = "hidden";
         }
 
-        // 关闭
+        // 关闭看图
         function closeViewer() {
             viewer.style.display = "none";
             document.body.style.overflow = "auto";
@@ -223,18 +233,25 @@
         // 上一张
         function prev() {
             currentIndex = (currentIndex - 1 + images.length) % images.length;
-            viewImg.src = folder + images[currentIndex];
             scale = 1;
+            lastScale = 1;
             viewImg.style.transform = `scale(${scale})`;
+            viewImg.src = folder + images[currentIndex];
         }
 
         // 下一张
         function next() {
             currentIndex = (currentIndex + 1) % images.length;
-            viewImg.src = folder + images[currentIndex];
             scale = 1;
+            lastScale = 1;
             viewImg.style.transform = `scale(${scale})`;
+            viewImg.src = folder + images[currentIndex];
         }
+
+        // 点击背景关闭
+        viewer.onclick = (e) => {
+            if (e.target === viewer) closeViewer();
+        };
 
         // 滚轮缩放
         viewer.addEventListener("wheel", e => {
@@ -242,6 +259,55 @@
             scale += e.deltaY > 0 ? -0.1 : 0.1;
             scale = Math.max(0.5, Math.min(scale, 3));
             viewImg.style.transform = `scale(${scale})`;
+        });
+
+        // 双击放大/复原
+        viewImg.addEventListener("dblclick", e => {
+            e.preventDefault();
+            scale = scale > 1 ? 1 : 2;
+            viewImg.style.transform = `scale(${scale})`;
+        });
+
+        // 双指缩放
+        let touchStartDist = 0;
+        viewer.addEventListener("touchstart", e => {
+            if (e.touches.length === 2) {
+                const d = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                touchStartDist = d;
+                lastScale = scale;
+            }
+        });
+
+        viewer.addEventListener("touchmove", e => {
+            e.preventDefault();
+            if (e.touches.length === 2) {
+                const d = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                scale = lastScale * (d / touchStartDist);
+                scale = Math.max(0.5, Math.min(scale, 3));
+                viewImg.style.transform = `scale(${scale})`;
+            }
+        });
+
+        // 左右滑动切换（任何缩放状态都可用）
+        let touchStartX = 0;
+        viewer.addEventListener("touchstart", e => {
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+            }
+        });
+
+        viewer.addEventListener("touchend", e => {
+            if (e.changedTouches.length !== 1) return;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(dx) > 60) {
+                dx > 0 ? prev() : next();
+            }
         });
 
         // 键盘控制
@@ -252,11 +318,10 @@
             if (e.key === "ArrowRight") next();
         });
 
-        // 点击事件
+        // PC端按钮
         document.querySelector(".close").onclick = closeViewer;
         document.querySelector(".prev").onclick = prev;
         document.querySelector(".next").onclick = next;
-        viewer.onclick = e => e.target === viewer && closeViewer();
     </script>
 </body>
 </html>

@@ -83,24 +83,38 @@
             }
         }
 
-        /* 大图查看器 */
+        /* 看图弹窗 */
         .viewer {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 0, 0, 0.97);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 9999;
+            padding: 10px;
+            user-select: none;
         }
 
-        .viewer img {
-            max-width: 95%;
-            max-height: 95%;
+        .view-img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
             object-fit: contain;
+            transform-origin: center center;
+            transition: transform 0.2s ease-out;
+            touch-action: none;
+        }
+
+        /* 移动端隐藏按钮 */
+        @media (max-width: 768px) {
+            .close, .prev, .next {
+                display: none !important;
+            }
         }
 
         .close {
@@ -117,7 +131,28 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            z-index: 10;
         }
+
+        .prev, .next {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            font-size: 40px;
+            background: rgba(255,255,255,0.2);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .prev { left: 20px; }
+        .next { right: 20px; }
     </style>
 </head>
 
@@ -134,74 +169,159 @@
 
     <div class="viewer" id="viewer">
         <div class="close">×</div>
-        <img id="viewImg" src="">
+        <div class="prev">‹</div>
+        <div class="next">›</div>
+        <img class="view-img" id="viewImg">
     </div>
 
     <script>
-        // ==============================================
-        // 只需要在这里写【你已经手动命名的图片】
-        // 后面会自动从 下一个数字 开始补齐到 maxImages
-        // ==============================================
-        const manualImages = [
-            "1.jpg",
-            "2.jpg"
-        ];
+        // ====================== 配置 ======================
+        const manualImages = ["1.jpg", "2.jpg"];
+        const folder = "128b/";
+        const maxImages = 7;
+        const ext = "jpg";
+        // ==================================================
 
-        const folder = "128b/";         // 图片文件夹
-        const maxImages = 7;              // 最多自动补到多少张
-        const ext = "jpg";                  // 图片后缀
-
-        // 自动生成完整图片列表
-        function generateImageList() {
+        function genList() {
             let list = [...manualImages];
-            if (list.length === 0) return [];
-
-            // 取最后一张的数字作为起点
-            const last = list[list.length - 1];
-            const start = parseInt(last) + 1;
-
-            for (let i = start; i <= maxImages; i++) {
+            if (!list.length) return [];
+            const lastNum = parseInt(list.at(-1));
+            for (let i = lastNum + 1; i <= maxImages; i++) {
                 list.push(i + "." + ext);
             }
             return list;
         }
 
-        const images = generateImageList();
-        const listEl = document.getElementById("list");
+        const images = genList();
+        let currentIndex = 0;
+        let scale = 1;
+        let lastScale = 1;
+
         const viewer = document.getElementById("viewer");
         const viewImg = document.getElementById("viewImg");
+        const listEl = document.getElementById("list");
 
-        // 渲染图片
-        images.forEach(item => {
+        // 渲染瀑布流
+        images.forEach((src, idx) => {
             const div = document.createElement("div");
             div.className = "waterfall-item";
-
             const img = document.createElement("img");
-            img.src = folder + item;
+            img.src = folder + src;
             img.loading = "lazy";
-
-            img.onclick = () => {
-                viewImg.src = img.src;
-                viewer.style.display = "flex";
-                document.body.style.overflow = "hidden";
-            };
-
+            img.onclick = () => openImg(idx);
             div.appendChild(img);
             listEl.appendChild(div);
         });
 
-        // 关闭大图
-        document.querySelector(".close").onclick = () => {
+        // 打开看图
+        function openImg(idx) {
+            currentIndex = idx;
+            scale = 1;
+            lastScale = 1;
+            viewImg.style.transform = `scale(${scale})`;
+            viewImg.src = folder + images[currentIndex];
+            viewer.style.display = "flex";
+            document.body.style.overflow = "hidden";
+        }
+
+        // 关闭看图
+        function closeViewer() {
             viewer.style.display = "none";
             document.body.style.overflow = "auto";
+        }
+
+        // 上一张
+        function prev() {
+            currentIndex = (currentIndex - 1 + images.length) % images.length;
+            scale = 1;
+            lastScale = 1;
+            viewImg.style.transform = `scale(${scale})`;
+            viewImg.src = folder + images[currentIndex];
+        }
+
+        // 下一张
+        function next() {
+            currentIndex = (currentIndex + 1) % images.length;
+            scale = 1;
+            lastScale = 1;
+            viewImg.style.transform = `scale(${scale})`;
+            viewImg.src = folder + images[currentIndex];
+        }
+
+        // 点击背景关闭
+        viewer.onclick = (e) => {
+            if (e.target === viewer) closeViewer();
         };
 
-        viewer.onclick = (e) => {
-            if (e.target === viewer) {
-                viewer.style.display = "none";
-                document.body.style.overflow = "auto";
+        // 滚轮缩放
+        viewer.addEventListener("wheel", e => {
+            e.preventDefault();
+            scale += e.deltaY > 0 ? -0.1 : 0.1;
+            scale = Math.max(0.5, Math.min(scale, 3));
+            viewImg.style.transform = `scale(${scale})`;
+        });
+
+        // 双击放大/复原
+        viewImg.addEventListener("dblclick", e => {
+            e.preventDefault();
+            scale = scale > 1 ? 1 : 2;
+            viewImg.style.transform = `scale(${scale})`;
+        });
+
+        // 双指缩放
+        let touchStartDist = 0;
+        viewer.addEventListener("touchstart", e => {
+            if (e.touches.length === 2) {
+                const d = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                touchStartDist = d;
+                lastScale = scale;
             }
-        };
+        });
+
+        viewer.addEventListener("touchmove", e => {
+            e.preventDefault();
+            if (e.touches.length === 2) {
+                const d = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                scale = lastScale * (d / touchStartDist);
+                scale = Math.max(0.5, Math.min(scale, 3));
+                viewImg.style.transform = `scale(${scale})`;
+            }
+        });
+
+        // 左右滑动切换（任何缩放状态都可用）
+        let touchStartX = 0;
+        viewer.addEventListener("touchstart", e => {
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+            }
+        });
+
+        viewer.addEventListener("touchend", e => {
+            if (e.changedTouches.length !== 1) return;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(dx) > 60) {
+                dx > 0 ? prev() : next();
+            }
+        });
+
+        // 键盘控制
+        document.addEventListener("keydown", e => {
+            if (viewer.style.display !== "flex") return;
+            if (e.key === "Escape") closeViewer();
+            if (e.key === "ArrowLeft") prev();
+            if (e.key === "ArrowRight") next();
+        });
+
+        // PC端按钮
+        document.querySelector(".close").onclick = closeViewer;
+        document.querySelector(".prev").onclick = prev;
+        document.querySelector(".next").onclick = next;
     </script>
 </body>
 </html>
